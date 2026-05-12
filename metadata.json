@@ -1,0 +1,8 @@
+{
+  "owner": "release-plz",
+  "name": "action",
+  "alias": "release-plz-action",
+  "visibility": "internal",
+  "description": "GitHub action for https://github.com/release-plz/release-plz",
+  "block_publish": false
+}
