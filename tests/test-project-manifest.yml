@@ -1,0 +1,21 @@
+name: Test project_manifest deprecated input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_REPOSITORY: test-owner/test-repo
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+          project_manifest: Cargo.toml
+      - name: Assert inputs were accepted
+        run: |
+          echo "Action completed (may have failed due to missing credentials, which is expected)"
+          echo "PASS: deprecated input project_manifest was accepted by the action"

@@ -14,15 +14,15 @@ Action **release-plz--action/v0.5.129** was hardened automatically. 29 finding(s
 
 ### script-injection (severity: high)
 
-The 'Install release-plz' run: step directly interpolates ${{ inputs.version }} into the shell command (`cargo-binstall release-plz@${{ inputs.version }}`). An attacker who controls the `version` input can inject arbitrary shell commands. The input should be assigned to an environment variable and referenced as $ENV_VAR instead.
+The 'Install release-plz' step directly interpolates `${{ inputs.version }}` inside a `run:` shell command (`cargo-binstall release-plz@${{ inputs.version }}`). An attacker who controls the `version` input can inject arbitrary shell commands. The value should be assigned to an environment variable via `env:` and referenced as `$VERSION` in the shell script.
 
 Locations:
 
-- `action.yml:86`
+- `action.yml:88`
 
 ### script-injection (severity: high)
 
-The 'Run release-plz' run: step directly interpolates multiple inputs.* expressions into shell commands without first assigning them to environment variables. Affected inputs include: inputs.config, inputs.verbose, inputs.dry_run, inputs.token, inputs.forge, inputs.backend, inputs.registry, inputs.manifest_path, inputs.project_manifest, and inputs.command. An attacker who controls any of these inputs can inject arbitrary shell commands. Each input should be assigned to an env: variable and referenced as $ENV_VAR in the run block.
+The 'Run release-plz' step directly interpolates multiple `inputs.*` expressions inside a `run:` shell command without first routing them through `env:` variables. Affected inputs include: `inputs.config`, `inputs.verbose`, `inputs.dry_run`, `inputs.token`, `inputs.forge`, `inputs.backend`, `inputs.registry`, `inputs.manifest_path`, `inputs.project_manifest`, and `inputs.command`. These are used directly in shell conditionals (e.g., `[[ -n "${{ inputs.config }}" ]]`) and array assignments (e.g., `CONFIG_PATH=("--config" "${{ inputs.config }}")`), allowing an attacker to inject arbitrary shell commands via any of these inputs.
 
 Locations:
 
@@ -252,7 +252,7 @@ Locations:
 
 **Notes:**
 
-Fixed all script injection findings in actions/hardened/release-plz--action/v0.5.129/action.yml:
-1. 'Install release-plz' step: moved ${{ inputs.version }} to env var RELEASE_PLZ_VERSION and referenced as ${RELEASE_PLZ_VERSION} in the run block.
-2. 'Run release-plz' step: moved all 10 inputs (config, verbose, dry_run, token, forge, backend, registry, manifest_path, project_manifest, command) to an env: block as INPUT_* variables, and updated all shell references from ${{ inputs.* }} to ${INPUT_*}. This covers all 28 static-inline-injection findings across lines 89, 99, 101, 103, 108, 115, 122, 125, 130, 132, 133, 134, 137, 138, 143, 145, 146, 151, 153, 154, 155, 157, 158, 163, and 205.
+Fixed all script injection findings in action.yml:
+1. 'Install release-plz' step: moved ${{ inputs.version }} to env: block as RELEASE_PLZ_VERSION, updated run: script to use ${RELEASE_PLZ_VERSION}.
+2. 'Run release-plz' step: moved all 10 inputs (config, verbose, dry_run, token, forge, backend, registry, manifest_path, project_manifest, command) to an env: block as INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND respectively. All ${{ inputs.* }} interpolations in the run: shell script were replaced with the corresponding $INPUT_* environment variable references.
 
