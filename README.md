@@ -1,6 +1,6 @@
 # release-plz/action
 
-GitHub action for https://github.com/release-plz/release-plz
+Update version and changelog based on semantic versioning and conventional commits
 
 Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/release-plz/action](https://github.com/release-plz/action).
 
