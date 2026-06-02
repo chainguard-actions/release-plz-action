@@ -9,6 +9,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | Version | Tag | Upstream commit |
 |---------|-----|-----------------|
 | v0.5.128 | [`v0.5.128`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.128) | — |
+| v0.5.129 | [`v0.5.129`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.129) | [`064f4d1`](https://github.com/release-plz/action/commit/064f4d1e36c843611ddf013be726beaa4ad804db) |
 
 ## Privacy
 
