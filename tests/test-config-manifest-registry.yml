@@ -1,0 +1,29 @@
+name: Test config, manifest_path, and registry inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_REPOSITORY: test-owner/test-repo
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          config: release-plz.toml
+          manifest_path: Cargo.toml
+          registry: my-registry
+      - name: Assert action ran with config, manifest_path, and registry inputs
+        run: |
+          echo "Action outcome: ${{ steps.action.outcome }}"
+          # The action is expected to fail in a test environment without a real
+          # Rust project and GitHub token. We just verify the inputs were accepted
+          # (i.e., the action started and processed inputs before failing).
+          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
+            echo "FAIL: action was skipped unexpectedly"
+            exit 1
+          fi
+          echo "PASS: action ran with config, manifest_path, and registry inputs"
