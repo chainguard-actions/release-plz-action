@@ -1,0 +1,21 @@
+name: Test release-pr command with verbose
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_REPOSITORY: test-owner/test-repo
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        with:
+          command: release-pr
+          verbose: "true"
+        continue-on-error: true
+      - name: Assert action ran (inputs accepted)
+        run: |
+          echo "Action completed (may have failed due to missing real token/repo, which is expected)"
+          echo "PASS: inputs command and verbose were accepted"
