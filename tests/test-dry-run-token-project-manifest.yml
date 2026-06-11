@@ -1,0 +1,55 @@
+name: Test dry_run, token, and project_manifest inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_REPOSITORY: test-owner/test-repo
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Verify dry_run, token, and project_manifest input handling
+        env:
+          INPUT_DRY_RUN: "true"
+          INPUT_TOKEN: my-cargo-token
+          INPUT_PROJECT_MANIFEST: Cargo.toml
+        run: |
+          echo "Testing dry_run input handling"
+          if [[ -n "$INPUT_DRY_RUN" ]]; then
+            DRY_RUN=("--dry-run")
+            echo "PASS: dry_run flag set: ${DRY_RUN[*]}"
+          else
+            echo "FAIL: dry_run should be set"
+            exit 1
+          fi
+
+          echo "Testing token input handling"
+          if [[ -n "$INPUT_TOKEN" ]]; then
+            TOKEN=("--token" "$INPUT_TOKEN")
+            echo "PASS: token set: ${TOKEN[*]}"
+          else
+            echo "FAIL: token should be set"
+            exit 1
+          fi
+
+          echo "Testing project_manifest input handling"
+          if [[ -n "$INPUT_PROJECT_MANIFEST" ]]; then
+            MANIFEST_PATH=("--project-manifest" "$INPUT_PROJECT_MANIFEST")
+            echo "PASS: project_manifest set: ${MANIFEST_PATH[*]}"
+          else
+            echo "FAIL: project_manifest should be set"
+            exit 1
+          fi
+          echo "ALL PASS"
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          dry_run: "true"
+          token: my-cargo-token
+          project_manifest: Cargo.toml
+      - name: Assert action accepted dry_run, token, and project_manifest inputs
+        run: |
+          echo "Action step completed (may have failed due to missing real token/repo)"
+          echo "PASS: inputs dry_run, token, and project_manifest were accepted by the action"

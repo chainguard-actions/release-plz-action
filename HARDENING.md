@@ -1,32 +1,48 @@
+<!-- markdownlint-disable -->
+
 # Hardening Report: release-plz--action/v0.5.130
 
 > This file was generated automatically by the hardening agent.
 
-**Policy SHA:** `ff50f15e4b79bfbf764dafdfd2579175a6ea9771`
+**Policy SHA:** `d636be7e43ef829af6e853da6b3c7566db9f72fe`
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
 **Harden Agent Version:** `1`
 
-Action **release-plz--action/v0.5.130** was hardened automatically. 29 finding(s) were identified and resolved across 1 iteration(s).
+Action **release-plz--action/v0.5.130** was hardened automatically. 28 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-The 'Install release-plz' run step directly interpolates `${{ inputs.version }}` into a shell command string (`cargo-binstall release-plz@${{ inputs.version }}`). An attacker-controlled value for `inputs.version` is embedded directly in the shell command without first being assigned to an environment variable, enabling script injection.
+Two `run:` steps in action.yml directly interpolate `${{ inputs.* }}` expressions into shell command strings (rule a), allowing an attacker who controls input values to inject arbitrary shell commands.
+
+**Step: "Install release-plz"** — `inputs.version` is interpolated directly into the cargo-binstall command:
+```
+cargo-binstall \
+    release-plz@${{ inputs.version }}\
+```
+
+**Step: "Run release-plz"** — Multiple inputs are interpolated directly into shell conditionals and array assignments:
+- `if [[ -n "${{ inputs.config }}" ]]` and `CONFIG_PATH=("--config" "${{ inputs.config }}")`
+- `if [[ -n "${{ inputs.verbose }}" ]]`
+- `if [[ -n "${{ inputs.dry_run }}" ]]`
+- `if [[ -n "${{ inputs.token }}" ]]` and `TOKEN=("--token" "${{ inputs.token }}")`
+- `if [[ -n "${{ inputs.forge }}" ]]` and `FORGE=("--forge" "${{ inputs.forge }}")`
+- `if [[ -n "${{ inputs.backend }}" ]]` and `FORGE=("--forge" "${{ inputs.backend }}")`
+- `if [[ -n "${{ inputs.registry }}" ]]` and `ALT_REGISTRY=("--registry" "${{ inputs.registry }}")`
+- `if [[ -n "${{ inputs.manifest_path }}" ]]` and `MANIFEST_PATH=("--manifest-path" "${{ inputs.manifest_path }}")`
+- `if [[ -n "${{ inputs.project_manifest }}" ]]` and `MANIFEST_PATH=("--project-manifest" "${{ inputs.project_manifest }}")`
+- `if [[ -z "${{ inputs.command }}" || "${{ inputs.command }}" == "release-pr" ]]`
+- `if [[ -z "${{ inputs.command }}" || "${{ inputs.command }}" == "release" ]]`
+
+All these values should be passed via `env:` variables and referenced as `"$VAR"` in the shell script instead.
 
 Locations:
 
-- `action.yml:97`
-
-### script-injection (severity: high)
-
-The 'Run release-plz' run step directly interpolates multiple attacker-controlled `inputs.*` expressions into shell command strings without first assigning them to environment variables. Affected inputs include: `inputs.config`, `inputs.verbose`, `inputs.dry_run`, `inputs.token`, `inputs.forge`, `inputs.backend`, `inputs.registry`, `inputs.manifest_path`, `inputs.project_manifest`, and `inputs.command`. These are interpolated directly into `if` conditions and array assignments (e.g., `if [[ -n "${{ inputs.config }}" ]]`, `CONFIG_PATH=("--config" "${{ inputs.config }}")`), enabling script injection via any of these inputs.
-
-Locations:
-
-- `action.yml:103`
+- `action.yml:82`
+- `action.yml:89`
 
 ### static-inline-injection (severity: high)
 
@@ -252,9 +268,9 @@ Locations:
 
 **Notes:**
 
-Fixed all script injection vulnerabilities in actions/hardened/release-plz--action/v0.5.130/action.yml:
+Fixed all script injection findings in actions/hardened/release-plz--action/v0.5.130/action.yml:
 
-1. 'Install release-plz' step: Added `env: RELEASE_PLZ_VERSION: ${{ inputs.version }}` and replaced the inline `${{ inputs.version }}` in the run block with `${RELEASE_PLZ_VERSION}`.
+1. **"Install release-plz" step**: Moved `${{ inputs.version }}` to an `env:` block as `RELEASE_PLZ_VERSION`, and updated the run script to use `${RELEASE_PLZ_VERSION}` instead.
 
-2. 'Run release-plz' step: Added an `env:` block with 10 environment variables (INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND) mapping all attacker-controlled inputs. Replaced all 28+ inline `${{ inputs.* }}` expressions in the shell script with their corresponding `${INPUT_*}` environment variable references. This prevents shell injection via any of these inputs.
+2. **"Run release-plz" step**: Moved all 10 `${{ inputs.* }}` expressions to an `env:` block (INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND), and updated all references in the shell script to use the corresponding `$INPUT_*` environment variables instead of inline `${{ }}` expressions.
 

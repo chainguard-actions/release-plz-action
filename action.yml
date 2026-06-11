@@ -119,71 +119,71 @@ runs:
         INPUT_PROJECT_MANIFEST: ${{ inputs.project_manifest }}
         INPUT_COMMAND: ${{ inputs.command }}
       run: |
-        if [[ -n "${INPUT_CONFIG}" ]]
+        if [[ -n "$INPUT_CONFIG" ]]
         then
-            echo "using config from '${INPUT_CONFIG}'"
+            echo "using config from '$INPUT_CONFIG'"
             # Use arrays so that inputs can contain spaces
-            CONFIG_PATH=("--config" "${INPUT_CONFIG}")
+            CONFIG_PATH=("--config" "$INPUT_CONFIG")
         else
             CONFIG_PATH=()
         fi
 
-        if [[ -n "${INPUT_VERBOSE}" ]]
+        if [[ -n "$INPUT_VERBOSE" ]]
         then
             VERBOSE=("-v")
         else
             VERBOSE=()
         fi
 
-        if [[ -n "${INPUT_DRY_RUN}" ]]
+        if [[ -n "$INPUT_DRY_RUN" ]]
         then
             DRY_RUN=("--dry-run")
         else
             DRY_RUN=()
         fi
 
-        if [[ -n "${INPUT_TOKEN}" ]]
+        if [[ -n "$INPUT_TOKEN" ]]
         then
             echo "using custom registry token'"
-            TOKEN=("--token" "${INPUT_TOKEN}")
+            TOKEN=("--token" "$INPUT_TOKEN")
         else
             TOKEN=()
         fi
 
-        if [[ -n "${INPUT_FORGE}" ]]
+        if [[ -n "$INPUT_FORGE" ]]
         then
-          echo "Using forge '${INPUT_FORGE}'"
-          FORGE=("--forge" "${INPUT_FORGE}")
-        elif [[ -n "${INPUT_BACKEND}" ]]
+          echo "Using forge '$INPUT_FORGE'"
+          FORGE=("--forge" "$INPUT_FORGE")
+        elif [[ -n "$INPUT_BACKEND" ]]
         then
           echo "'backend' input is supported for backward compatibility. Use 'forge' instead."
-          echo "Using backend '${INPUT_BACKEND}'"
-          FORGE=("--forge" "${INPUT_BACKEND}")
+          echo "Using backend '$INPUT_BACKEND'"
+          FORGE=("--forge" "$INPUT_BACKEND")
         else
           FORGE=()
         fi
 
-        if [[ -n "${INPUT_REGISTRY}" ]]
+        if [[ -n "$INPUT_REGISTRY" ]]
         then
-            echo "using registry '${INPUT_REGISTRY}'"
-            ALT_REGISTRY=("--registry" "${INPUT_REGISTRY}")
+            echo "using registry '$INPUT_REGISTRY'"
+            ALT_REGISTRY=("--registry" "$INPUT_REGISTRY")
         else
             ALT_REGISTRY=()
         fi
 
-        if [[ -n "${INPUT_MANIFEST_PATH}" ]]
+        if [[ -n "$INPUT_MANIFEST_PATH" ]]
         then
-            echo "using manifest path '${INPUT_MANIFEST_PATH}'"
-            MANIFEST_PATH=("--manifest-path" "${INPUT_MANIFEST_PATH}")
-        elif [[ -n "${INPUT_PROJECT_MANIFEST}" ]]
+            echo "using manifest path '$INPUT_MANIFEST_PATH'"
+            MANIFEST_PATH=("--manifest-path" "$INPUT_MANIFEST_PATH")
+        elif [[ -n "$INPUT_PROJECT_MANIFEST" ]]
         then
-            echo "using manifest path '${INPUT_PROJECT_MANIFEST}'"
-            MANIFEST_PATH=("--project-manifest" "${INPUT_PROJECT_MANIFEST}")
+            echo "using manifest path '$INPUT_PROJECT_MANIFEST'"
+            MANIFEST_PATH=("--project-manifest" "$INPUT_PROJECT_MANIFEST")
         else
             MANIFEST_PATH=()
         fi
 
-        if [[ -z "${INPUT_COMMAND}" || "${INPUT_COMMAND}" == "release-pr" ]]
+        if [[ -z "$INPUT_COMMAND" || "$INPUT_COMMAND" == "release-pr" ]]
         then
             echo "-- Running release-plz release-pr --"
             release_pr_output=$(release-plz release-pr\
@@ -210,7 +210,7 @@ runs:
             echo "prs_created=$prs_created" >> "$GITHUB_OUTPUT"
         fi
 
-        if [[ -z "${INPUT_COMMAND}" || "${INPUT_COMMAND}" == "release" ]]
+        if [[ -z "$INPUT_COMMAND" || "$INPUT_COMMAND" == "release" ]]
         then
             echo "-- Running release-plz release --"
             release_output=$(release-plz release\
