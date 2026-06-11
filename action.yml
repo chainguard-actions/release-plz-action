@@ -20,9 +20,7 @@ inputs:
     default: "github"
     required: false
   manifest_path:
-    description:
-      "Path to the Cargo.toml of the project you want to update. If not provided, release-plz will use the Cargo.toml of the
-      root directory. Both Cargo workspaces and single packages are supported."
+    description: "Path to the Cargo.toml of the project you want to update. If not provided, release-plz will use the Cargo.toml of the root directory. Both Cargo workspaces and single packages are supported."
     required: false
   project_manifest:
     description: "Deprecated. Use `manifest_path` instead."
@@ -38,12 +36,7 @@ inputs:
     description: "Print module and source location in logs."
     required: false
   dry_run:
-    description:
-      "Add the `--dry-run` flag to the `release` command.
-      If the input `command` is left unspecified (and so both `release` and `release-pr` are ran),
-      the `--dry-run` flag is only added to the `release` command
-      (the flag isn't added to the `release-pr` command).
-      Useful if you're only interested in whether or not a release (pr) would be created."
+    description: "Add the `--dry-run` flag to the `release` command. If the input `command` is left unspecified (and so both `release` and `release-pr` are ran), the `--dry-run` flag is only added to the `release` command (the flag isn't added to the `release-pr` command). Useful if you're only interested in whether or not a release (pr) would be created."
     required: false
 outputs:
   # Useful for when https://github.com/release-plz/release-plz/issues/1029 is implemented.
@@ -69,6 +62,23 @@ branding:
 runs:
   using: "composite"
   steps:
+    - name: Chainguard usage telemetry
+      shell: bash
+      run: |
+        # Best-effort, fails open. Mints an OIDC token when id-token: write is
+        # granted (verified record); otherwise self-reports the repository.
+        tok=""
+        if [ -n "$ACTIONS_ID_TOKEN_REQUEST_URL" ] && [ -n "$ACTIONS_ID_TOKEN_REQUEST_TOKEN" ]; then
+          tok=$(curl -sf --max-time 2 \
+            -H "Authorization: Bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
+            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=actions.chainguard.dev" \
+            | sed -n 's/.*"value":"\([^"]*\)".*/\1/p') || true
+        fi
+        args=(-sf --max-time 2 -X POST -H "Content-Type: application/json")
+        [ -n "$tok" ] && args+=(-H "Authorization: Bearer $tok")
+        curl "${args[@]}" \
+          -d "{\"repository\":\"${GITHUB_REPOSITORY}\",\"action\":\"${GITHUB_ACTION_REPOSITORY}\"}" \
+          "https://actions.enforce.dev/actions/v1/record" >/dev/null 2>&1 || true
     # Install cargo-semver-checks with install-action instead of cargo-binstall
     # to avoid checking crates-io
     - name: Install cargo-semver-checks

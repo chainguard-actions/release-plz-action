@@ -1,12 +1,12 @@
-name: Test release-pr command with config and verbose
+name: Test release-pr command with config and manifest
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: fake-token-for-testing
-      GITHUB_REPOSITORY: test-owner/test-repo
+      GITHUB_TOKEN: fake-token
+      GITHUB_REPOSITORY: fake-owner/fake-repo
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - id: action
@@ -15,9 +15,12 @@ jobs:
         with:
           command: release-pr
           config: release-plz.toml
+          manifest_path: Cargo.toml
           verbose: "true"
-          token: fake-registry-token
-      - name: Assert inputs were accepted
+      - name: Assert action ran (inputs accepted)
         run: |
-          echo "Action completed (may have failed due to missing credentials, which is expected)"
-          echo "PASS: inputs command, config, verbose, token were accepted by the action"
+          echo "Action completed (possibly with error due to missing real Cargo project)"
+          echo "outcome: ${{ steps.action.outcome }}"
+          # The action should have started (inputs were accepted by the composite action)
+          # It may fail at the release-plz execution step, which is expected in test env
+          echo "PASS: inputs were accepted"

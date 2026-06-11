@@ -1,8 +1,10 @@
+<!-- markdownlint-disable -->
+
 # Hardening Report: release-plz--action/v0.5.129
 
 > This file was generated automatically by the hardening agent.
 
-**Policy SHA:** `ff50f15e4b79bfbf764dafdfd2579175a6ea9771`
+**Policy SHA:** `d636be7e43ef829af6e853da6b3c7566db9f72fe`
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
@@ -14,19 +16,19 @@ Action **release-plz--action/v0.5.129** was hardened automatically. 29 finding(s
 
 ### script-injection (severity: high)
 
-The 'Install release-plz' step directly interpolates `${{ inputs.version }}` inside a `run:` shell command (`cargo-binstall release-plz@${{ inputs.version }}`). An attacker who controls the `version` input can inject arbitrary shell commands. The value should be assigned to an environment variable via `env:` and referenced as `$VERSION` in the shell script.
+Sub-rule (a): The 'Install release-plz' run: block directly interpolates ${{ inputs.version }} into a shell command: `release-plz@${{ inputs.version }}`. A calling workflow that supplies a malicious version string (e.g. containing `;`, `|`, `$(...)`) can execute arbitrary shell commands on the runner.
 
 Locations:
 
-- `action.yml:88`
+- `action.yml:100`
 
 ### script-injection (severity: high)
 
-The 'Run release-plz' step directly interpolates multiple `inputs.*` expressions inside a `run:` shell command without first routing them through `env:` variables. Affected inputs include: `inputs.config`, `inputs.verbose`, `inputs.dry_run`, `inputs.token`, `inputs.forge`, `inputs.backend`, `inputs.registry`, `inputs.manifest_path`, `inputs.project_manifest`, and `inputs.command`. These are used directly in shell conditionals (e.g., `[[ -n "${{ inputs.config }}" ]]`) and array assignments (e.g., `CONFIG_PATH=("--config" "${{ inputs.config }}")`), allowing an attacker to inject arbitrary shell commands via any of these inputs.
+Sub-rule (a): The 'Run release-plz' run: block directly interpolates multiple ${{ inputs.* }} expressions into shell conditionals and array assignments without routing them through env: variables first. Affected inputs: inputs.config (used in `if [[ -n "${{ inputs.config }}" ]]` and `"${{ inputs.config }}"`), inputs.verbose, inputs.dry_run, inputs.token (used in `TOKEN=("--token" "${{ inputs.token }}")`), inputs.forge, inputs.backend, inputs.registry, inputs.manifest_path, inputs.project_manifest, and inputs.command. Any of these inputs can contain shell metacharacters (`;`, `|`, `$(...)`, backticks) that will be interpreted by bash before the shell ever sees the value.
 
 Locations:
 
-- `action.yml:95`
+- `action.yml:107`
 
 ### static-inline-injection (severity: high)
 
@@ -252,7 +254,11 @@ Locations:
 
 **Notes:**
 
-Fixed all script injection findings in action.yml:
-1. 'Install release-plz' step: moved ${{ inputs.version }} to env: block as RELEASE_PLZ_VERSION, updated run: script to use ${RELEASE_PLZ_VERSION}.
-2. 'Run release-plz' step: moved all 10 inputs (config, verbose, dry_run, token, forge, backend, registry, manifest_path, project_manifest, command) to an env: block as INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND respectively. All ${{ inputs.* }} interpolations in the run: shell script were replaced with the corresponding $INPUT_* environment variable references.
+Fixed all script injection findings in actions/hardened/release-plz--action/v0.5.129/action.yml:
+
+1. 'Install release-plz' step: Added env: block with RELEASE_PLZ_VERSION: ${{ inputs.version }} and replaced the inline ${{ inputs.version }} in the run: block with ${RELEASE_PLZ_VERSION}.
+
+2. 'Run release-plz' step: Added env: block mapping all 10 inputs (config, verbose, dry_run, token, forge, backend, registry, manifest_path, project_manifest, command) to INPUT_* environment variables. Replaced all ${{ inputs.* }} expressions throughout the run: block with their corresponding $INPUT_* environment variable references.
+
+All ${{ inputs.* }} expressions now appear only in env: blocks (safe), and the shell scripts reference plain environment variables, preventing shell metacharacter injection.
 
