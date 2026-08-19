@@ -1,0 +1,6 @@
+[package]
+name = "release-plz-test-pkg"
+version = "0.1.0"
+edition = "2021"
+description = "Test package for release-plz action"
+license = "MIT"

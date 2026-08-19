@@ -1,0 +1,49 @@
+name: Test release-plz version installation
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Create a minimal Rust project for release-plz to work with
+      - name: Create minimal Rust project
+        run: |
+          mkdir -p /tmp/test-rust-project/src
+          cat > /tmp/test-rust-project/Cargo.toml << 'EOF'
+          [package]
+          name = "test-crate"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          echo 'fn main() {}' > /tmp/test-rust-project/src/main.rs
+          cd /tmp/test-rust-project
+          git init
+          git config user.email "test@test.com"
+          git config user.name "Test"
+          git add .
+          git commit -m "feat: initial commit"
+
+      - id: action
+        uses: .
+        with:
+          command: release-pr
+          manifest_path: /tmp/test-rust-project/Cargo.toml
+          version: "0.3.158"
+        env:
+          GITHUB_TOKEN: fake-token-for-testing
+          GITHUB_REPOSITORY: test-owner/test-repo
+        continue-on-error: true
+
+      - name: Verify release-plz was installed
+        run: |
+          echo "Checking if release-plz is installed..."
+          if command -v release-plz &> /dev/null; then
+            INSTALLED_VERSION=$(release-plz --version 2>&1 || true)
+            echo "release-plz version: $INSTALLED_VERSION"
+            echo "PASS: release-plz is installed"
+          else
+            echo "FAIL: release-plz is not installed"
+            exit 1
+          fi

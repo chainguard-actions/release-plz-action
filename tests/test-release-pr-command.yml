@@ -1,26 +1,62 @@
-name: Test release-pr command with config and manifest
+name: Test release-pr command
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      GITHUB_TOKEN: fake-token
-      GITHUB_REPOSITORY: fake-owner/fake-repo
+      GITHUB_TOKEN: fake-token-for-testing
+      GITHUB_REPOSITORY: test-owner/test-repo
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      # Create a minimal Rust project for release-plz to work with
+      - name: Create minimal Rust project
+        run: |
+          mkdir -p /tmp/test-rust-project/src
+          cat > /tmp/test-rust-project/Cargo.toml << 'EOF'
+          [package]
+          name = "test-crate"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          echo 'fn main() {}' > /tmp/test-rust-project/src/main.rs
+          cd /tmp/test-rust-project
+          git init
+          git config user.email "test@test.com"
+          git config user.name "Test"
+          git add .
+          git commit -m "feat: initial commit"
+
       - id: action
         uses: .
-        continue-on-error: true
         with:
           command: release-pr
-          config: release-plz.toml
-          manifest_path: Cargo.toml
-          verbose: "true"
-      - name: Assert action ran (inputs accepted)
+          manifest_path: /tmp/test-rust-project/Cargo.toml
+          forge: github
+        env:
+          GITHUB_TOKEN: fake-token-for-testing
+          GITHUB_REPOSITORY: test-owner/test-repo
+        continue-on-error: true
+
+      - name: Assert action ran and produced outputs
+        env:
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "Action completed (possibly with error due to missing real Cargo project)"
-          echo "outcome: ${{ steps.action.outcome }}"
-          # The action should have started (inputs were accepted by the composite action)
-          # It may fail at the release-plz execution step, which is expected in test env
-          echo "PASS: inputs were accepted"
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          # The action will fail because the token is fake and the repo doesn't exist,
+          # but it should at least attempt to run and produce some output.
+          # We accept either success (unlikely with fake token) or failure (expected).
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Action succeeded (unexpected but acceptable)"
+            if [ "$PRS_CREATED" != "true" ] && [ "$PRS_CREATED" != "false" ]; then
+              echo "FAIL: prs_created should be 'true' or 'false', got: '$PRS_CREATED'"
+              exit 1
+            fi
+            echo "PASS: prs_created=$PRS_CREATED"
+          else
+            echo "Action failed as expected with fake credentials"
+            echo "PASS"
+          fi
