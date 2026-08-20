@@ -1,4 +1,4 @@
-name: Test release command with dry-run
+name: Test token input
 on:
   workflow_dispatch:
 jobs:
@@ -17,18 +17,16 @@ jobs:
         with:
           command: release
           dry_run: "true"
+          token: cio_test_token_placeholder
 
-      - name: Assert action ran (release fails gracefully on sentinel repo)
+      - name: Assert action ran with token input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
           RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
-          RELEASES: ${{ steps.action.outputs.releases }}
         run: |
           echo "outcome: $OUTCOME"
           echo "releases_created: $RELEASES_CREATED"
-          echo "releases: $RELEASES"
           if [ "$OUTCOME" = "success" ]; then
-            # If somehow it succeeded, releases_created should be a boolean
             if [ "$RELEASES_CREATED" != "true" ] && [ "$RELEASES_CREATED" != "false" ]; then
               echo "FAIL: releases_created output should be 'true' or 'false', got: '$RELEASES_CREATED'"
               exit 1

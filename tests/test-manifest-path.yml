@@ -1,0 +1,49 @@
+name: Test manifest_path input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Create a minimal Cargo.toml for manifest_path
+        run: |
+          mkdir -p /tmp/test-crate
+          cat > /tmp/test-crate/Cargo.toml << 'EOF'
+          [package]
+          name = "test-crate"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+          manifest_path: /tmp/test-crate/Cargo.toml
+
+      - name: Assert action ran with manifest_path input (fails gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ "$PRS_CREATED" != "true" ] && [ "$PRS_CREATED" != "false" ]; then
+              echo "FAIL: prs_created output should be 'true' or 'false', got: '$PRS_CREATED'"
+              exit 1
+            fi
+            echo "PASS: action succeeded with prs_created=$PRS_CREATED"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

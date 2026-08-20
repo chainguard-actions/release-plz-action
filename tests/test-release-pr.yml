@@ -1,4 +1,4 @@
-name: Test release command with dry-run
+name: Test release-pr command
 on:
   workflow_dispatch:
 jobs:
@@ -15,25 +15,24 @@ jobs:
         uses: .
         continue-on-error: true
         with:
-          command: release
-          dry_run: "true"
+          command: release-pr
 
-      - name: Assert action ran (release fails gracefully on sentinel repo)
+      - name: Assert action ran (release-pr fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
-          RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
-          RELEASES: ${{ steps.action.outputs.releases }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          PRS: ${{ steps.action.outputs.prs }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "releases_created: $RELEASES_CREATED"
-          echo "releases: $RELEASES"
+          echo "prs_created: $PRS_CREATED"
+          echo "prs: $PRS"
           if [ "$OUTCOME" = "success" ]; then
-            # If somehow it succeeded, releases_created should be a boolean
-            if [ "$RELEASES_CREATED" != "true" ] && [ "$RELEASES_CREATED" != "false" ]; then
-              echo "FAIL: releases_created output should be 'true' or 'false', got: '$RELEASES_CREATED'"
+            # If somehow it succeeded, prs_created should be a boolean
+            if [ "$PRS_CREATED" != "true" ] && [ "$PRS_CREATED" != "false" ]; then
+              echo "FAIL: prs_created output should be 'true' or 'false', got: '$PRS_CREATED'"
               exit 1
             fi
-            echo "PASS: action succeeded with releases_created=$RELEASES_CREATED"
+            echo "PASS: action succeeded with prs_created=$PRS_CREATED"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
