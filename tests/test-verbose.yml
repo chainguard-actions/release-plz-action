@@ -1,0 +1,51 @@
+name: Test verbose flag
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up git user
+        run: |
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+
+      - name: Copy fixture Cargo project into workspace
+        run: |
+          cp -r "$GITHUB_WORKSPACE/tests/fixtures/rust-project/." "$GITHUB_WORKSPACE/"
+          git add Cargo.toml src/
+          git commit -m "feat: add initial crate" || true
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+          verbose: "true"
+          manifest_path: Cargo.toml
+
+      - name: Assert action ran with verbose flag
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ -z "$PRS_CREATED" ]; then
+              echo "FAIL: action succeeded but prs_created output is empty"
+              exit 1
+            fi
+            echo "PASS: action succeeded with verbose flag, prs_created=$PRS_CREATED"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

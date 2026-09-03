@@ -1,0 +1,8 @@
+[package]
+name = "my-test-crate"
+version = "0.1.0"
+edition = "2021"
+description = "A test crate for release-plz action tests"
+license = "MIT"
+
+[dependencies]

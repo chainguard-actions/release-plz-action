@@ -1,17 +1,25 @@
-# release-plz/action
+# release-plz-action
 
-Update version and changelog based on semantic versioning and conventional commits
+Action for [release-plz](https://github.com/release-plz/release-plz).
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/release-plz/action](https://github.com/release-plz/action).
+## Docs
 
-## Versions
+Learn how to use this action in the [docs](https://release-plz.dev/).
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v0.5.128 | [`v0.5.128`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.128) | [`1528104`](https://github.com/release-plz/action/commit/1528104d2ca23787631a1c1f022abb64b34c1e11) |
-| v0.5.129 | [`v0.5.129`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.129) | [`064f4d1`](https://github.com/release-plz/action/commit/064f4d1e36c843611ddf013be726beaa4ad804db) |
-| v0.5.130 | [`v0.5.130`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.130) | [`e879257`](https://github.com/release-plz/action/commit/e8792575c7f2366cf6ff3ccc33ead9ace5b691c7) |
-| v0.5.131 | [`v0.5.131`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.131) | [`2eb1d8b`](https://github.com/release-plz/action/commit/2eb1d8bcb770b4c48ccfaad919734b38b51958c9) |
+<br>
+
+<sup>
+Licensed under either of <a href="LICENSE-APACHE">Apache License, Version 2.0</a>
+or <a href="LICENSE-MIT">MIT license</a> at your option.
+</sup>
+
+<br>
+
+<sub>
+Unless you explicitly state otherwise, any contribution intentionally submitted
+for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
+dual licensed as above, without any additional terms or conditions.
+</sub>
 
 ## Privacy
 
