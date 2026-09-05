@@ -1,0 +1,60 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - "main"
+    paths-ignore:
+      - "**.md"
+  pull_request:
+    paths-ignore:
+      - "**.md"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Create test project
+        run: |
+          cd .github/workflows/
+          cargo new marco-test-one
+          cd marco-test-one
+          # set a high version so that release-plz doesn't try to open a PR
+          sed -i 's/version = "0.1.0"/version = "999.0.0"/' Cargo.toml
+          git init
+          git config --global user.email "test@example.com"
+          git config --global user.name "Test"
+          git add .
+          git commit -m "first commit"
+          git remote add origin https://github.com/Test/release-plz-test.git
+      - name: Run release-plz
+        id: release-plz
+        uses: ./ # Uses an action in the root directory
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          # Keep this fixture on the release path; release-pr talks to the GitHub API
+          # and can fail with HTTP 422 for this no-op test repository setup.
+          command: release
+          project_manifest: .github/workflows/marco-test-one/Cargo.toml
+          dry_run: true
+      - name: Assert no releases
+        env:
+          RELEASES: ${{ steps.release-plz.outputs.releases }}
+          RELEASES_CREATED: ${{ steps.release-plz.outputs.releases_created }}
+        run: |
+          set -e
+          echo "releases: $RELEASES"
+          echo "releases_created: $RELEASES_CREATED"
+
+          releases_length=$(echo "$RELEASES" | jq 'length')
+          echo "releases_length: $releases_length"
+          if [ "$releases_length" != "0" ]; then
+            echo "expected no releases"
+            exit 1
+          fi
