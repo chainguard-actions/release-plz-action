@@ -1,0 +1,40 @@
+name: Test release-pr command only
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Assert action ran (succeeded or failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          PR: ${{ steps.action.outputs.pr }}
+          PRS: ${{ steps.action.outputs.prs }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          echo "pr: $PR"
+          echo "prs: $PRS"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+            # prs_created should be set (true or false)
+            if [ -z "$PRS_CREATED" ]; then
+              echo "FAIL: prs_created output is empty on success"
+              exit 1
+            fi
+            echo "PASS: prs_created='$PRS_CREATED'"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

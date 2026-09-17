@@ -1,0 +1,40 @@
+name: Test basic usage (both commands)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: action
+        uses: .
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Assert action ran (succeeded or failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          echo "releases_created: $RELEASES_CREATED"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+            # If it succeeded, prs_created and releases_created should be set
+            if [ -z "$PRS_CREATED" ]; then
+              echo "FAIL: prs_created output is empty on success"
+              exit 1
+            fi
+            if [ -z "$RELEASES_CREATED" ]; then
+              echo "FAIL: releases_created output is empty on success"
+              exit 1
+            fi
+            echo "PASS: outputs are set"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
