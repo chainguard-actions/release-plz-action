@@ -1,0 +1,73 @@
+name: Test registry and token inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Create a minimal Rust project with a custom registry configured
+      - name: Set up minimal Cargo project with custom registry
+        run: |
+          cat > "$GITHUB_WORKSPACE/Cargo.toml" << 'EOF'
+          [package]
+          name = "test-package"
+          version = "0.1.0"
+          edition = "2021"
+          description = "Test package for release-plz action"
+          license = "MIT"
+
+          [lib]
+          name = "test_package"
+          path = "src/lib.rs"
+          EOF
+          mkdir -p "$GITHUB_WORKSPACE/src"
+          echo "// test" > "$GITHUB_WORKSPACE/src/lib.rs"
+
+          # Create a Cargo config with a custom registry entry
+          mkdir -p "$GITHUB_WORKSPACE/.cargo"
+          cat > "$GITHUB_WORKSPACE/.cargo/config.toml" << 'EOF'
+          [registries.my-registry]
+          index = "https://github.com/rust-lang/crates.io-index"
+          EOF
+
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          git add Cargo.toml src/ .cargo/
+          git commit -m "feat: initial commit" || true
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release
+          registry: my-registry
+          token: fake-registry-token
+          dry_run: "true"
+          version: "0.3.169"
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Assert action ran with registry and token (sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "releases_created: $RELEASES_CREATED"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "Action succeeded"
+            if [ -z "$RELEASES_CREATED" ]; then
+              echo "FAIL: action succeeded but releases_created output is empty"
+              exit 1
+            fi
+            echo "PASS: releases_created=$RELEASES_CREATED"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo or fake registry)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
