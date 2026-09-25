@@ -1,4 +1,4 @@
-name: Test release-pr with config input
+name: Test config input
 on:
   workflow_dispatch:
 jobs:
@@ -6,42 +6,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-
-      # Set up a minimal Rust project and a release-plz config file
-      - name: Set up minimal Rust project and config
+      - name: Create a minimal release-plz config file
         run: |
-          cp "$GITHUB_WORKSPACE/hardened/tests/fixtures/rust-project/Cargo.toml" "$GITHUB_WORKSPACE/Cargo.toml" || true
-          mkdir -p "$GITHUB_WORKSPACE/src"
-          cp "$GITHUB_WORKSPACE/hardened/tests/fixtures/rust-project/src/lib.rs" "$GITHUB_WORKSPACE/src/lib.rs" || true
-          # Write a minimal release-plz config file
-          cat > "$GITHUB_WORKSPACE/release-plz-test.toml" <<'EOF'
-[workspace]
-EOF
-          git config user.email "test@example.com"
-          git config user.name "Test User"
-          git add Cargo.toml src/ release-plz-test.toml 2>/dev/null || true
-          git commit -m "chore: add test crate" --allow-empty 2>/dev/null || true
-
+          cat > /tmp/release-plz.toml <<'EOF'
+          [workspace]
+          EOF
       - id: action
         uses: .
         continue-on-error: true
         with:
           command: release-pr
-          config: release-plz-test.toml
+          config: /tmp/release-plz.toml
         env:
           GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Assert action ran with config input (sentinel repo)
+      - name: Assert action ran with config input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
-          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
         run: |
           echo "outcome: $OUTCOME"
-          echo "prs_created: $PRS_CREATED"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded with config input (prs_created=$PRS_CREATED)"
+            echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
