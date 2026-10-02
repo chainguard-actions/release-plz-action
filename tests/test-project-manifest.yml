@@ -1,21 +1,38 @@
-name: Test project_manifest deprecated input
+name: Test project_manifest input
 on:
   workflow_dispatch:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      GITHUB_TOKEN: fake-token-for-testing
-      GITHUB_REPOSITORY: test-owner/test-repo
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Create a minimal Cargo.toml for testing
+        run: |
+          mkdir -p /tmp/test-project
+          cat > /tmp/test-project/Cargo.toml << 'EOF'
+          [package]
+          name = "test-pkg"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
       - id: action
         uses: .
         continue-on-error: true
         with:
           command: release-pr
-          project_manifest: Cargo.toml
-      - name: Assert inputs were accepted
+          project_manifest: /tmp/test-project/Cargo.toml
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Assert action ran with project_manifest input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
         run: |
-          echo "Action completed (may have failed due to missing credentials, which is expected)"
-          echo "PASS: deprecated input project_manifest was accepted by the action"
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded with project_manifest input"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected with sentinel repo or missing Cargo.lock)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

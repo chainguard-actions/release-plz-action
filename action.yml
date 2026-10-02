@@ -95,10 +95,10 @@ runs:
     - name: Install release-plz
       shell: bash
       env:
-        RELEASE_PLZ_VERSION: ${{ inputs.version }}
+        INPUT_VERSION: ${{ inputs.version }}
       run: |
         cargo-binstall \
-            "release-plz@${RELEASE_PLZ_VERSION}"\
+            "release-plz@${INPUT_VERSION}"\
             --force\
             --strategies=crate-meta-data,compile\
             --no-confirm
