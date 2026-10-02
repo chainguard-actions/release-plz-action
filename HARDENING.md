@@ -10,33 +10,43 @@
 
 **Harden Agent Version:** `2`
 
-Action **release-plz--action/v0.5.128** was hardened automatically. 30 finding(s) were identified and resolved across 1 iteration(s).
+Action **release-plz--action/v0.5.128** was hardened automatically. 29 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-Sub-rule (a): The 'Install release-plz' run: block directly interpolates ${{ inputs.version }} into a shell command: `cargo-binstall release-plz@${{ inputs.version }}`. An attacker-controlled input value is substituted into the shell command string before the shell ever sees it, enabling command injection (e.g. a version value containing shell metacharacters or newlines).
+Sub-rule (a): The 'Install release-plz' step directly interpolates `${{ inputs.version }}` inside a `run:` shell command string. An attacker-controlled value for `inputs.version` is substituted into the shell before execution, enabling command injection. Offending line: `release-plz@${{ inputs.version }}\`
 
 Locations:
 
-- `action.yml:109`
+- `action.yml:85`
 
 ### script-injection (severity: high)
 
-Sub-rule (a): The 'Run release-plz' run: block directly interpolates multiple ${{ inputs.* }} expressions into shell commands, including: ${{ inputs.config }}, ${{ inputs.verbose }}, ${{ inputs.dry_run }}, ${{ inputs.token }}, ${{ inputs.forge }}, ${{ inputs.backend }}, ${{ inputs.registry }}, ${{ inputs.manifest_path }}, ${{ inputs.project_manifest }}, and ${{ inputs.command }}. These are all caller-controlled values substituted into the shell script before execution, enabling command injection via any of these inputs.
+Sub-rule (a): The 'Run release-plz' step directly interpolates multiple `${{ inputs.* }}` expressions inside a `run:` shell command string. Every input — `inputs.config`, `inputs.verbose`, `inputs.dry_run`, `inputs.token`, `inputs.forge`, `inputs.backend`, `inputs.registry`, `inputs.manifest_path`, `inputs.project_manifest`, and `inputs.command` — is substituted into the shell script before execution, enabling command injection via any of these caller-controlled values. Example offending lines: `if [[ -n "${{ inputs.config }}" ]]`, `CONFIG_PATH=("--config" "${{ inputs.config }}")`, `TOKEN=("--token" "${{ inputs.token }}")`, `FORGE=("--forge" "${{ inputs.forge }}")`, `if [[ -z "${{ inputs.command }}" || "${{ inputs.command }}" == "release-pr" ]]`.
 
 Locations:
 
-- `action.yml:115`
-
-### script-injection (severity: high)
-
-Sub-rule (a): The 'Update major tag' run: block in update_main_version.yml directly interpolates ${{ secrets.GITHUB_TOKEN }} into a shell command: `git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"`. Any ${{ }} expression interpolated directly inside a run: shell string is a script-injection finding regardless of the context it reads from.
-
-Locations:
-
-- `.github/workflows/update_main_version.yml:19`
+- `action.yml:95`
+- `action.yml:97`
+- `action.yml:99`
+- `action.yml:103`
+- `action.yml:107`
+- `action.yml:111`
+- `action.yml:113`
+- `action.yml:116`
+- `action.yml:118`
+- `action.yml:121`
+- `action.yml:123`
+- `action.yml:127`
+- `action.yml:129`
+- `action.yml:133`
+- `action.yml:135`
+- `action.yml:139`
+- `action.yml:141`
+- `action.yml:147`
+- `action.yml:148`
 
 ### static-inline-injection (severity: high)
 
@@ -262,11 +272,7 @@ Locations:
 
 **Notes:**
 
-Fixed all script injection findings across two files:
-
-1. hardened/action/action.yml - 'Install release-plz' step: Moved ${{ inputs.version }} to env: block as INPUT_VERSION; shell script now uses ${INPUT_VERSION}.
-
-2. hardened/action/action.yml - 'Run release-plz' step: Moved all 10 inputs (${{ inputs.config }}, ${{ inputs.verbose }}, ${{ inputs.dry_run }}, ${{ inputs.token }}, ${{ inputs.forge }}, ${{ inputs.backend }}, ${{ inputs.registry }}, ${{ inputs.manifest_path }}, ${{ inputs.project_manifest }}, ${{ inputs.command }}) to an env: block as INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND respectively. All references in the run: block updated to use the env vars.
-
-3. hardened/action/.github/workflows/update_main_version.yml - 'Update major tag' step: Moved ${{ secrets.GITHUB_TOKEN }} to env: block as GH_TOKEN; git remote set-url command now uses ${GH_TOKEN}.
+Fixed all script injection findings in hardened/action/action.yml:
+1. 'Install release-plz' step: moved ${{ inputs.version }} to env block as INPUT_VERSION, replaced inline expression with ${INPUT_VERSION} in the run script.
+2. 'Run release-plz' step: moved all 10 inputs (config, verbose, dry_run, token, forge, backend, registry, manifest_path, project_manifest, command) to an env: block as INPUT_* variables, and replaced all ${{ inputs.* }} inline expressions throughout the shell script with the corresponding $INPUT_* environment variable references. All remaining ${{ inputs.* }} occurrences in the file are now only in env: blocks, which is safe.
 
