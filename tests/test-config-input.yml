@@ -19,7 +19,7 @@ jobs:
           config: /tmp/release-plz-test.toml
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with config input (graceful failure expected on sentinel repo)
+      - name: Assert action ran with config input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |

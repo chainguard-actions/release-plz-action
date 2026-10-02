@@ -11,11 +11,11 @@ jobs:
         continue-on-error: true
         with:
           command: release
-          token: ${{ github.token }}
+          token: fake-cargo-registry-token
           dry_run: "true"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with token input (graceful failure expected on sentinel repo)
+      - name: Assert action ran with token input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |

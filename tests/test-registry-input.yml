@@ -10,12 +10,11 @@ jobs:
         uses: .
         continue-on-error: true
         with:
-          command: release
+          command: release-pr
           registry: my-registry
-          dry_run: "true"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with registry input (graceful failure expected on sentinel repo)
+      - name: Assert action ran with registry input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |

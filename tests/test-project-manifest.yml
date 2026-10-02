@@ -1,4 +1,4 @@
-name: Test project_manifest input (deprecated)
+name: Test project_manifest input
 on:
   workflow_dispatch:
 jobs:
@@ -11,7 +11,7 @@ jobs:
           mkdir -p /tmp/test-project
           cat > /tmp/test-project/Cargo.toml << 'EOF'
           [package]
-          name = "test-project"
+          name = "test-package"
           version = "0.1.0"
           edition = "2021"
           EOF
@@ -23,7 +23,7 @@ jobs:
           project_manifest: /tmp/test-project/Cargo.toml
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with project_manifest input (graceful failure expected on sentinel repo)
+      - name: Assert action ran with project_manifest input (fails gracefully on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
