@@ -82,7 +82,7 @@ runs:
     # Install cargo-semver-checks with install-action instead of cargo-binstall
     # to avoid checking crates-io
     - name: Install cargo-semver-checks
-      uses: taiki-e/install-action@f23382d582832e41d5eb4fff2bddb06bc5adf8d3 # v2.68.21
+      uses: chainguard-actions/taiki-e-install-action@14524f55cc0c07dcb4ca3000d8cc8c7f6d7c5029 # v2.68.21
       with:
         tool: cargo-semver-checks@0.46
     - name: Install cargo-binstall
