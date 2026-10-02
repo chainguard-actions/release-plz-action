@@ -6,12 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a minimal Cargo.toml for testing
+      - name: Create a minimal Cargo.toml
         run: |
-          mkdir -p /tmp/test-crate-pm
-          cat > /tmp/test-crate-pm/Cargo.toml << 'EOF'
+          mkdir -p /tmp/myproject2
+          cat > /tmp/myproject2/Cargo.toml <<'EOF'
           [package]
-          name = "test-crate-pm"
+          name = "myproject2"
           version = "0.1.0"
           edition = "2021"
           EOF
@@ -20,10 +20,10 @@ jobs:
         continue-on-error: true
         with:
           command: release-pr
-          project_manifest: /tmp/test-crate-pm/Cargo.toml
+          project_manifest: /tmp/myproject2/Cargo.toml
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with project_manifest input (success or graceful failure on sentinel repo)
+      - name: Assert action ran (project_manifest input accepted)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
@@ -31,7 +31,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded with project_manifest input"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
+            echo "PASS: action failed gracefully (expected with sentinel repo)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
