@@ -8,41 +8,27 @@
 
 **Test Policy SHA:** `843adf9e4b8f85d0c08b27b9d0b09dd094b54702`
 
-**Harden Agent Version:** `1`
+**Harden Agent Version:** `2`
 
-Action **release-plz--action/v0.5.130** was hardened automatically. 28 finding(s) were identified and resolved across 1 iteration(s).
+Action **release-plz--action/v0.5.130** was hardened automatically. 29 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### script-injection (severity: high)
 
-Two `run:` steps in action.yml directly interpolate `${{ inputs.* }}` expressions into shell command strings (rule a), allowing an attacker who controls input values to inject arbitrary shell commands.
-
-**Step: "Install release-plz"** — `inputs.version` is interpolated directly into the cargo-binstall command:
-```
-cargo-binstall \
-    release-plz@${{ inputs.version }}\
-```
-
-**Step: "Run release-plz"** — Multiple inputs are interpolated directly into shell conditionals and array assignments:
-- `if [[ -n "${{ inputs.config }}" ]]` and `CONFIG_PATH=("--config" "${{ inputs.config }}")`
-- `if [[ -n "${{ inputs.verbose }}" ]]`
-- `if [[ -n "${{ inputs.dry_run }}" ]]`
-- `if [[ -n "${{ inputs.token }}" ]]` and `TOKEN=("--token" "${{ inputs.token }}")`
-- `if [[ -n "${{ inputs.forge }}" ]]` and `FORGE=("--forge" "${{ inputs.forge }}")`
-- `if [[ -n "${{ inputs.backend }}" ]]` and `FORGE=("--forge" "${{ inputs.backend }}")`
-- `if [[ -n "${{ inputs.registry }}" ]]` and `ALT_REGISTRY=("--registry" "${{ inputs.registry }}")`
-- `if [[ -n "${{ inputs.manifest_path }}" ]]` and `MANIFEST_PATH=("--manifest-path" "${{ inputs.manifest_path }}")`
-- `if [[ -n "${{ inputs.project_manifest }}" ]]` and `MANIFEST_PATH=("--project-manifest" "${{ inputs.project_manifest }}")`
-- `if [[ -z "${{ inputs.command }}" || "${{ inputs.command }}" == "release-pr" ]]`
-- `if [[ -z "${{ inputs.command }}" || "${{ inputs.command }}" == "release" ]]`
-
-All these values should be passed via `env:` variables and referenced as `"$VAR"` in the shell script instead.
+Sub-rule (a): The 'Install release-plz' step directly interpolates `${{ inputs.version }}` inside the `run:` shell command string: `cargo-binstall release-plz@${{ inputs.version }}`. A caller-controlled value is substituted into the shell before it executes, enabling command injection (e.g. a version string containing shell metacharacters or newlines).
 
 Locations:
 
-- `action.yml:82`
-- `action.yml:89`
+- `action.yml:101`
+
+### script-injection (severity: high)
+
+Sub-rule (a): The 'Run release-plz' step directly interpolates multiple `${{ inputs.* }}` expressions inside the `run:` shell command string, including: `${{ inputs.config }}`, `${{ inputs.verbose }}`, `${{ inputs.dry_run }}`, `${{ inputs.token }}`, `${{ inputs.forge }}`, `${{ inputs.backend }}`, `${{ inputs.registry }}`, `${{ inputs.manifest_path }}`, `${{ inputs.project_manifest }}`, and `${{ inputs.command }}`. All of these are substituted into the shell script before execution, allowing a caller to inject arbitrary shell commands via any of these inputs.
+
+Locations:
+
+- `action.yml:108`
 
 ### static-inline-injection (severity: high)
 
@@ -268,9 +254,7 @@ Locations:
 
 **Notes:**
 
-Fixed all script injection findings in actions/hardened/release-plz--action/v0.5.130/action.yml:
-
-1. **"Install release-plz" step**: Moved `${{ inputs.version }}` to an `env:` block as `RELEASE_PLZ_VERSION`, and updated the run script to use `${RELEASE_PLZ_VERSION}` instead.
-
-2. **"Run release-plz" step**: Moved all 10 `${{ inputs.* }}` expressions to an `env:` block (INPUT_CONFIG, INPUT_VERBOSE, INPUT_DRY_RUN, INPUT_TOKEN, INPUT_FORGE, INPUT_BACKEND, INPUT_REGISTRY, INPUT_MANIFEST_PATH, INPUT_PROJECT_MANIFEST, INPUT_COMMAND), and updated all references in the shell script to use the corresponding `$INPUT_*` environment variables instead of inline `${{ }}` expressions.
+Fixed all script-injection findings in action.yml:
+1. 'Install release-plz' step: moved `${{ inputs.version }}` into an `env:` block as `INPUT_VERSION`, and updated the `run:` script to use `"release-plz@${INPUT_VERSION}"`.
+2. 'Run release-plz' step: moved all 10 `${{ inputs.* }}` expressions (`config`, `verbose`, `dry_run`, `token`, `forge`, `backend`, `registry`, `manifest_path`, `project_manifest`, `command`) into an `env:` block with corresponding `INPUT_*` variable names, and updated all references in the shell script to use the environment variables instead of inline expressions.
 
