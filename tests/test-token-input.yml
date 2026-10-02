@@ -12,9 +12,10 @@ jobs:
         with:
           command: release
           token: ${{ github.token }}
+          dry_run: "true"
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with token input (fails gracefully on sentinel repo)
+      - name: Assert action ran with token input (graceful failure expected on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
@@ -22,7 +23,7 @@ jobs:
           if [ "$OUTCOME" = "success" ]; then
             echo "PASS: action succeeded"
           elif [ "$OUTCOME" = "failure" ]; then
-            echo "PASS: action failed gracefully (expected on sentinel repo)"
+            echo "PASS: action failed gracefully (sentinel repo is not resolvable)"
           else
             echo "FAIL: unexpected outcome '$OUTCOME'"
             exit 1
