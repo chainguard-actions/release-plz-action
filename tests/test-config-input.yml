@@ -6,7 +6,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a minimal release-plz config file
+      - name: Create a release-plz config file
         run: |
           cat > /tmp/release-plz.toml << 'EOF'
           [workspace]
@@ -19,13 +19,13 @@ jobs:
           config: /tmp/release-plz.toml
         env:
           GITHUB_TOKEN: ${{ github.token }}
-      - name: Assert action ran with config input (fails gracefully on sentinel repo)
+      - name: Assert action ran with config input (success or graceful failure on sentinel repo)
         env:
           OUTCOME: ${{ steps.action.outcome }}
         run: |
           echo "outcome: $OUTCOME"
           if [ "$OUTCOME" = "success" ]; then
-            echo "PASS: action succeeded"
+            echo "PASS: action succeeded with config input"
           elif [ "$OUTCOME" = "failure" ]; then
             echo "PASS: action failed gracefully (expected on sentinel repo)"
           else
