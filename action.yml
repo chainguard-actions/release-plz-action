@@ -103,7 +103,7 @@ runs:
             --strategies=crate-meta-data,compile\
             --no-confirm
     - name: Configure git user from GitHub token
-      uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4
+      uses: chainguard-actions/release-plz-git-config@2b9db7e7964378dc9ddb6af4b967940e8143d2c2
     - name: Run release-plz
       id: release-plz
       shell: bash
