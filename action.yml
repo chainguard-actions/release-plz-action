@@ -102,7 +102,7 @@ runs:
             --no-confirm
     - name: Configure git user from GitHub token
       if: ${{ (inputs.forge || inputs.backend || 'github') == 'github' }}
-      uses: chainguard-actions/release-plz-git-config@2b9db7e7964378dc9ddb6af4b967940e8143d2c2
+      uses: chainguard-actions/release-plz-git-config@081d60b0340f5100688c56a83640d16c8310c372
     - name: Run release-plz
       id: release-plz
       shell: bash
