@@ -80,7 +80,7 @@ runs:
     # Install cargo-semver-checks with install-action instead of cargo-binstall
     # to avoid checking crates-io
     - name: Install cargo-semver-checks
-      uses: taiki-e/install-action@f7e5d7c961414b23f5b25b2da9294395d08513ad # v2.87.26
+      uses: chainguard-actions/taiki-e-install-action@6ddf4d0b2e92cc0be9a8066ac4afa0e4d10c10a2 # v2.87.26
       with:
         tool: cargo-semver-checks@0.51
     - name: Install cargo-binstall
@@ -102,7 +102,7 @@ runs:
             --no-confirm
     - name: Configure git user from GitHub token
       if: ${{ (inputs.forge || inputs.backend || 'github') == 'github' }}
-      uses: release-plz/git-config@59144859caf016f8b817a2ac9b051578729173c4
+      uses: chainguard-actions/release-plz-git-config@081d60b0340f5100688c56a83640d16c8310c372
     - name: Run release-plz
       id: release-plz
       shell: bash
