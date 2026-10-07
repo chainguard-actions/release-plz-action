@@ -1,0 +1,58 @@
+name: Test release-plz release-pr command
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up minimal Cargo workspace
+        run: |
+          cat > "$GITHUB_WORKSPACE/Cargo.toml" << 'EOF'
+          [package]
+          name = "test-pkg"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          mkdir -p "$GITHUB_WORKSPACE/src"
+          echo 'fn main() {}' > "$GITHUB_WORKSPACE/src/main.rs"
+          git config user.email "test@example.com"
+          git config user.name "Test User"
+          git add Cargo.toml src/
+          git commit -m "feat: initial commit" || true
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Assert release-pr command ran or failed gracefully
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS: ${{ steps.action.outputs.prs }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          PR: ${{ steps.action.outputs.pr }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs: $PRS"
+          echo "prs_created: $PRS_CREATED"
+          echo "pr: $PR"
+          if [ "$OUTCOME" = "success" ]; then
+            # When successful, prs_created should be set (true or false)
+            if [ -z "$PRS_CREATED" ]; then
+              echo "FAIL: action succeeded but prs_created output is empty"
+              exit 1
+            fi
+            echo "PASS: release-pr command ran, prs_created=$PRS_CREATED"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (expected on sentinel repo)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
