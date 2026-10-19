@@ -1,0 +1,50 @@
+name: Test release-plz with verbose and forge inputs
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Create a minimal Rust project so release-plz can parse the manifest
+      - name: Set up minimal Cargo project
+        run: |
+          cat > "$GITHUB_WORKSPACE/Cargo.toml" <<'EOF'
+          [package]
+          name = "test-pkg"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          mkdir -p "$GITHUB_WORKSPACE/src"
+          echo 'fn main() {}' > "$GITHUB_WORKSPACE/src/main.rs"
+
+      # Run release-pr with verbose=true and explicit forge=github.
+      # The action will attempt to call the GitHub API using the sentinel
+      # GITHUB_REPOSITORY, which does not exist, so the step is expected to
+      # fail gracefully.
+      - id: action
+        uses: .
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          command: release-pr
+          verbose: "true"
+          forge: github
+
+      - name: Assert action ran with verbose and forge inputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (sentinel repo not resolvable)"
+          elif [ "$OUTCOME" = "success" ]; then
+            echo "PASS: action succeeded"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

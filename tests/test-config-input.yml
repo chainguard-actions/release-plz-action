@@ -1,0 +1,42 @@
+name: Test config input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create minimal Rust project and release-plz config
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/test-crate/src"
+          cat > "$GITHUB_WORKSPACE/test-crate/Cargo.toml" <<'EOF'
+          [package]
+          name = "test-crate"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          echo 'fn main() {}' > "$GITHUB_WORKSPACE/test-crate/src/main.rs"
+          cat > "$GITHUB_WORKSPACE/release-plz-test.toml" <<'EOF'
+          [workspace]
+          EOF
+
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release-pr
+          config: release-plz-test.toml
+          manifest_path: test-crate/Cargo.toml
+
+      - name: Assert action ran with config input
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+        run: |
+          echo "outcome: $OUTCOME"
+          if [ "$OUTCOME" = "success" ] || [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action ran with config input"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

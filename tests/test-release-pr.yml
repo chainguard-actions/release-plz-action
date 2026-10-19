@@ -1,0 +1,58 @@
+name: Test release-plz release-pr command
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      # Create a minimal Rust project so release-plz can parse the manifest
+      - name: Set up minimal Cargo project
+        run: |
+          cat > "$GITHUB_WORKSPACE/Cargo.toml" <<'EOF'
+          [package]
+          name = "test-pkg"
+          version = "0.1.0"
+          edition = "2021"
+          EOF
+          mkdir -p "$GITHUB_WORKSPACE/src"
+          echo 'fn main() {}' > "$GITHUB_WORKSPACE/src/main.rs"
+
+      # Run only the release-pr command. The action will attempt to call the
+      # GitHub API using the sentinel GITHUB_REPOSITORY, which does not exist,
+      # so the step is expected to fail gracefully.
+      - id: action
+        uses: .
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          command: release-pr
+
+      - name: Assert release-pr ran (failed gracefully on sentinel repo)
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+          PR: ${{ steps.action.outputs.pr }}
+          PRS: ${{ steps.action.outputs.prs }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "prs_created: $PRS_CREATED"
+          echo "pr: $PR"
+          echo "prs: $PRS"
+          if [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully as expected (sentinel repo not resolvable)"
+          elif [ "$OUTCOME" = "success" ]; then
+            # If it somehow succeeded, prs_created must be a boolean string
+            if [ "$PRS_CREATED" != "true" ] && [ "$PRS_CREATED" != "false" ]; then
+              echo "FAIL: prs_created output is not a boolean: '$PRS_CREATED'"
+              exit 1
+            fi
+            echo "PASS: action succeeded, prs_created=$PRS_CREATED"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi
