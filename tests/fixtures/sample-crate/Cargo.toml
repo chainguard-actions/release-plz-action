@@ -1,0 +1,9 @@
+[package]
+name = "actionchain-harness-sample-crate"
+version = "0.1.0"
+edition = "2021"
+description = "Sample crate used to test release-plz action"
+license = "MIT"
+publish = false
+
+[dependencies]
