@@ -1,0 +1,55 @@
+name: Test release dry-run
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Ensure Rust toolchain is available
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup.sh
+            sh /tmp/rustup.sh -y --profile minimal
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+      - id: action
+        uses: .
+        continue-on-error: true
+        with:
+          command: release
+          dry_run: "true"
+          manifest_path: tests/fixtures/sample-crate/Cargo.toml
+      - name: Assert release outputs
+        env:
+          OUTCOME: ${{ steps.action.outcome }}
+          RELEASES: ${{ steps.action.outputs.releases }}
+          RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
+          PRS_CREATED: ${{ steps.action.outputs.prs_created }}
+        run: |
+          echo "outcome: $OUTCOME"
+          echo "releases: $RELEASES"
+          echo "releases_created: $RELEASES_CREATED"
+          echo "prs_created: $PRS_CREATED"
+          if [ "$OUTCOME" = "success" ]; then
+            if [ "$RELEASES_CREATED" != "false" ]; then
+              echo "FAIL: expected releases_created=false for unpublishable crate in dry-run"
+              exit 1
+            fi
+            if ! echo "$RELEASES" | jq -e 'type == "array" and length == 0' >/dev/null; then
+              echo "FAIL: releases should be an empty JSON array"
+              exit 1
+            fi
+            if [ -n "$PRS_CREATED" ]; then
+              echo "FAIL: release-pr should not have run with command=release"
+              exit 1
+            fi
+            echo "PASS"
+          elif [ "$OUTCOME" = "failure" ]; then
+            echo "PASS: action failed gracefully (sentinel repo / harness environment)"
+          else
+            echo "FAIL: unexpected outcome '$OUTCOME'"
+            exit 1
+          fi

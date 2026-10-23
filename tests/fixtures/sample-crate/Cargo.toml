@@ -1,0 +1,11 @@
+[package]
+name = "actionchain-sample-crate"
+version = "0.1.0"
+edition = "2021"
+description = "Sample crate used by release-plz action tests"
+license = "MIT"
+publish = false
+
+[workspace]
+
+[dependencies]

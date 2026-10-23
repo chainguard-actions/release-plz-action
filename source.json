@@ -1,6 +1,12 @@
 {
   "owner": "release-plz",
   "repo": "action",
-  "version": "",
-  "url": "https://github.com/release-plz/action"
+  "version": "v0.5.145",
+  "commit_sha": "7ef5e4d4b0420630cfcaeb182c01e13651d4c577",
+  "url": "https://github.com/release-plz/action",
+  "policy_sha": "d636be7e43ef829af6e853da6b3c7566db9f72fe",
+  "test_policy_sha": "843adf9e4b8f85d0c08b27b9d0b09dd094b54702",
+  "test_agent_version": "2",
+  "harden_agent_version": "2",
+  "dependency_fingerprint": "sha256:a5998d711ed145fcb6dae3510cb86d25cf37f72ab65ed1f9fcb2397a3094286a"
 }
