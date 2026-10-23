@@ -24,6 +24,7 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 | v0.5.141 | [`v0.5.141`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.141) | [`f393a7b`](https://github.com/release-plz/action/commit/f393a7b38aca9d9b4c58447b291dbac963901df6) |
 | v0.5.143 | [`v0.5.143`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.143) | [`6caa8d3`](https://github.com/release-plz/action/commit/6caa8d34f74d82b0dc76a18edd1cc3d6801c9baf) |
 | v0.5.144 | [`v0.5.144`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.144) | [`8b5bf23`](https://github.com/release-plz/action/commit/8b5bf233ecb5779f63508db7cd050e948ee77cc2) |
+| v0.5.145 | [`v0.5.145`](https://github.com/chainguard-actions/release-plz-action/tree/v0.5.145) | [`7ef5e4d`](https://github.com/release-plz/action/commit/7ef5e4d4b0420630cfcaeb182c01e13651d4c577) |
 
 ## Privacy
 
