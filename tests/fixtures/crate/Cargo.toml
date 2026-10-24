@@ -1,0 +1,9 @@
+[package]
+name = "actionchain-release-plz-fixture"
+version = "0.1.0"
+edition = "2021"
+description = "Test fixture crate"
+license = "MIT"
+publish = false
+
+[workspace]
