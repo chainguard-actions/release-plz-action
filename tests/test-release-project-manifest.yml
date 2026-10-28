@@ -1,0 +1,56 @@
+name: Test release with deprecated project_manifest input
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN || github.token }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+      - name: Ensure Rust toolchain is available
+        run: |
+          if ! command -v cargo >/dev/null 2>&1; then
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs -o /tmp/rustup-init.sh
+            sh /tmp/rustup-init.sh -y --profile minimal
+            echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+          fi
+      - name: Ensure GitHub CLI (gh) is available
+        run: |
+          if ! command -v gh >/dev/null 2>&1; then
+            GH_VERSION=2.63.2
+            ARCH=amd64
+            case "$(uname -m)" in aarch64|arm64) ARCH=arm64 ;; esac
+            curl -sSfL "https://github.com/cli/cli/releases/download/v${GH_VERSION}/gh_${GH_VERSION}_linux_${ARCH}.tar.gz" -o /tmp/gh.tgz
+            mkdir -p /tmp/gh-install
+            tar -xzf /tmp/gh.tgz -C /tmp/gh-install
+            mkdir -p "$HOME/.local/gh-bin"
+            cp "/tmp/gh-install/gh_${GH_VERSION}_linux_${ARCH}/bin/gh" "$HOME/.local/gh-bin/gh"
+            chmod +x "$HOME/.local/gh-bin/gh"
+            echo "$HOME/.local/gh-bin" >> "$GITHUB_PATH"
+          fi
+      - id: action
+        uses: .
+        with:
+          command: release
+          dry_run: "true"
+          version: "0.3"
+          project_manifest: tests/fixtures/sample-crate/Cargo.toml
+      - name: Assert no releases were created
+        env:
+          RELEASES: ${{ steps.action.outputs.releases }}
+          RELEASES_CREATED: ${{ steps.action.outputs.releases_created }}
+        run: |
+          echo "releases: $RELEASES"
+          echo "releases_created: $RELEASES_CREATED"
+          if [ "$RELEASES_CREATED" != "false" ]; then
+            echo "FAIL: expected releases_created=false"
+            exit 1
+          fi
+          if [ "$(echo "$RELEASES" | jq 'length')" != "0" ]; then
+            echo "FAIL: expected empty releases array"
+            exit 1
+          fi
+          echo "PASS"
